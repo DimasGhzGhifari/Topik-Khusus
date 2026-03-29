@@ -1,0 +1,83 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Notification Consumer - Simple CLI Runner
+ * Usage: php artisan consumer:email
+ *        php artisan consumer:email --help
+ *        php artisan server
+ */
+
+require __DIR__.'/vendor/autoload.php';
+require __DIR__.'/bootstrap/app.php';
+
+$command = $argv[1] ?? 'help';
+$args = array_slice($argv, 2);
+
+// Simple command router
+$commands = [
+    'consumer:email' => function() {
+        require __DIR__.'/scripts/email-consumer.php';
+    },
+    'consumer:sms' => function() {
+        require __DIR__.'/scripts/sms-consumer.php';
+    },
+    'consumer:fcm' => function() {
+        require __DIR__.'/scripts/fcm-consumer.php';
+    },
+    'server' => function($args) {
+        $port = $args[0] ?? '8000';
+        $apiServer = escapeshellarg(__DIR__ . '/api-server.php');
+        echo "Starting server on http://localhost:{$port}\n";
+        echo "Press Ctrl+C to stop\n\n";
+        passthru("php -S localhost:{$port} {$apiServer}");
+    },
+    'serve' => function($args) {
+        $port = $args[0] ?? '8000';
+        $apiServer = escapeshellarg(__DIR__ . '/api-server.php');
+        echo "Starting server on http://localhost:{$port}\n";
+        echo "Press Ctrl+C to stop\n\n";
+        passthru("php -S localhost:{$port} {$apiServer}");
+    },
+    'test' => function() {
+        require __DIR__.'/scripts/test-components.php';
+    },
+    'help' => function() {
+        echo <<<'HELP'
+
+Notification Consumer - CLI Commands
+
+COMMANDS:
+  consumer:email    Start email consumer
+  consumer:sms      Start SMS consumer
+  consumer:fcm      Start FCM consumer
+  server [port]     Start API server (default port: 8000)
+  serve [port]      Alias for server command
+  test              Test all components
+  help              Show this help message
+
+EXAMPLES:
+  php artisan consumer:email
+  php artisan consumer:sms
+  php artisan consumer:fcm
+  php artisan server 8000
+  php artisan serve           (same as server)
+  php artisan test
+
+For more info, see:
+  - SETUP.md
+  - EXAMPLE_COMMANDS.md
+  - POSTMAN_COMMANDS.md
+
+HELP;
+    }
+];
+
+// Execute command
+if (isset($commands[$command])) {
+    $commands[$command]($args);
+} else {
+    echo "Unknown command: {$command}\n";
+    echo "Run 'php artisan help' for available commands\n";
+    exit(1);
+}
